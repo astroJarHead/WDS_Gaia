@@ -24,7 +24,8 @@ Williams and Bob Zavala (BZ) at NOFS.
 
 BZ undertook subsequent development to improve and develop upon DZ's work. 
 
-Module consists of:
+
+Module consists of: 
 
     1) gaiaTable: read in the WDS catalog and after some database 
     preparation writes out files in formats suitable for the project 
@@ -41,7 +42,8 @@ Module consists of:
 
 """
 
-from astropy.table import Table, Column, MaskedColumn, vstack, join, setdiff
+from astropy.table import Table, Column, MaskedColumn, vstack, join, \
+        setdiff
 from astropy import units as u
 from astropy.coordinates import ICRS, SkyCoord, FK5
 from astropy.io import ascii
@@ -363,9 +365,9 @@ def gaiaTable():
     totalElapTime = endTime - startTime
     totalCpuTime  = endCpuTime - startCpuTime
 
-    print('Elapsed time for building and writing tables:' 
+    print('Elapsed time for building and writing tables: ' 
          '{:.3f} seconds.'.format(totalElapTime))
-    print('Elapsed CPU for building and writing tables:' 
+    print('Elapsed CPU for building and writing tables: ' 
          '{:.3f} seconds.\n'.format(totalCpuTime))
     print('Finished, thank you for using gaiaTable!')
 
@@ -388,6 +390,9 @@ def mergeTables():
         working directory defined   
     
     """
+ 
+    startTime = time.time()
+
     # create PathManager instance
     this_path = PathManager.set_path()
     this_path = PathManager.get_path()
@@ -508,7 +513,15 @@ def mergeTables():
 
     print('Finished writing the VOTable.\n')
 
-    print(' Thank you for using merge_tables\n')
+    endTime = time.time()
+
+    elapTime = endTime - startTime
+
+    print('Elapsed time for merging tables: ' 
+         '{:.3f} seconds.'.format(elapTime))
+
+
+    print('   Thank you for using merge_tables.\n')
     print('**********')
 
 # main part of code
