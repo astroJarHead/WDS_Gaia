@@ -1,5 +1,22 @@
 ### build_and_write_wds_table.py
-### 
+
+__author__ = "Daphne Zakarian, Robert T. Zavala, Jr."
+__version__ = "1.0"
+__license__ = " This is a work of the U.S. Government and is not subject to copyright \
+ protection in the United States. The U.S. Government retains all exclusive \
+ rights to use, duplicate, distribute, disclose, or release this software \
+ and all associated documentation and data.Use of appropriate byline or \
+ credit is requested. "
+
+### Copyright and License 
+#
+# This is a work of the U.S. Government and is not subject to copyright 
+# protection in the United States. The U.S. Government retains all exclusive 
+# rights to use, duplicate, distribute, disclose, or release this software 
+# and all associated documentation and data.Use of appropriate byline or 
+# credit is requested. 
+#
+###
 #
 # STEP 1 OF WDS TO GAIA DR3 MATCHING 
 #
@@ -40,28 +57,58 @@ import os
 import time
 
 def gaiaTable():
-
+    
     """
     Original Created on Thu 09 Jun 11:56:21 MDT 2022
-    @author: Daphne Zakarian
+    @author: Daphne Zakarian, Bob Zavala
 
-    Read in the WDS using pandas, turn into an astropy table, find secondary coords, 
-    account for proper motion etc.
+    Read in the WDS using pandas, turn into an astropy table, find secondary 
+    RA and DEC coordinates using offset from primary. Next, apply proper  
+    proper motions to primary and secondary to Gaia DR3 2016.0 epoch. 
+    At the end, about tables in csv, ecsv and VOtable formats for use in 
+    matching against Gaia DR3. 
 
     Final table will be used to query Gaia -- most importantly, we have primary 
-    and secondary stars' coordinates in deg
+    and secondary stars' coordinates in degrees at the DR3 epoch. 
 
     Changes began on Thu 30 May 09:08:00 MDT 2024 
     by Bob Zavala to include Discoverer and Components in order to 
     pass unique identifier information along. Coordinates and WDS ID alone
     do not uniquely identify the WDS entries. 
 
+    Accounts for small number of WDS entries with large proper motions 
+    expressed in time units of kilo-years. Retains number of measures in 
+    the WDS and the WDS spectral type. 
+
     Name of file changed to explicitly state the code builds and writes a WDS 
     table. 
 
+    Parameters
+    ----------
+    None:
+
+    Requires
+    --------
+    1) conda environment gaiaWds activated
+    2) ASCII file wdsweb_summ2.txt in current directory
+       This is a copy of the WDS catalog
+
+    Output
+    ------
+    1) Output files with prefix wdstab_new in csv, ecsv and VOtable 
+       formats written in current directory
+
+    To run
+    ------
+    1) Start python
+    2) import build_and_write_wds_table
+       build_and_write_wds_table.gaiaTable()
+    OR:
+    1) Start python
+    2) from  build_and_write_wds_table
+    3) gaiaTable()
+
     """
-
-
 
     this_path = os.getcwd()
 
@@ -70,7 +117,7 @@ def gaiaTable():
     startCpuTime = time.process_time()
 
     print('\n')
-    print('Welcome to the gaiaTable module! This takes about 5 minutes (+/-).')
+    print('Welcome to the gaiaTable module! This should take a few (<5) minutes.')
     print('Starting to build the WDS tables for the Gaia queries.\n')
     print('**********')
     print('  Any ErfaWarnings from function pmsafe are normal and appear because the WDS lacks distances.')
@@ -295,9 +342,13 @@ def gaiaTable():
     print('\n')
     print('Proper motions applied to 2016.0 for querying against Gaia DR3.')
 
-    # Save this for the END as a P code indicates a Proper Motion note and 
-    # other such details we may need later.
-    wdstab.remove_columns(['#','DM', 'Desig'])
+    # Save this for the END. The DM identifications are not available 
+    # for all entries and are not a helpful alias.  
+    wdstab.remove_columns(['DM', 'Desig'])
+
+    # Avoid astropy generating a warning on a column with the name '#'
+    # and use a more explicit name of 'Num_Meas'
+    wdstab.rename_column('#','Num_meas')
 
     # SAVE TABLE AS ECSV and CSV and as a VOTable
     # Two different ways of coding the ascii-write are 
