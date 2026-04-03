@@ -121,7 +121,7 @@ def gaiaTable():
     print('Starting to build the WDS tables for the Gaia queries.\n')
     print('**********')
     print('  Any ErfaWarnings from function pmsafe are normal and appear because the WDS lacks distances.')
-    print('**********')
+    print('**********\n')
 
     # Read in Table: fixed width file to pandas to astropy 
 
@@ -147,12 +147,23 @@ def gaiaTable():
     wdspd = pd.read_fwf(this_path+"/wdsweb_summ2.txt",
                         colspecs=columns,header=None,names=oldnames,skiprows=3)
 
+    # Rename the '#' column to 'Num_meas' with Pandas via creating 
+    # a new column, 'drop'ping the old one with any blanks -> NaN
+    wdspd['Num_meas'] = pd.to_numeric(wdspd['#'], errors='coerce')
+    wdspd.drop(columns=['#'], inplace=True)
+
+    # Convert the magnitudes that upon import are read as strings into 
+    # floats using the apply method. This 'applies' pd.to_numeric
+    # to each column to be converted
+    mag_cols_to_convert = ['Mag-pri','Mag-sec']
+    wdspd[mag_cols_to_convert] = wdspd[mag_cols_to_convert].apply(pd.to_numeric, errors='coerce')
+
+    
     # pandas table -> astropy table
     wdstab = Table.from_pandas(wdspd)
 
-    print('\n')
-    print('An astropy table has been created from the WDS data.')
-    print('Converting precise WDS coordinates, and some other tasks. This takes a bit.')
+    print(' An astropy table has been created from the WDS data.')
+    print(' Converting precise WDS coordinates, and some other tasks. This takes a bit.')
 
     # Establish format for RA and DEC
 
@@ -195,9 +206,7 @@ def gaiaTable():
             noPrecise+=1
             pass
 
-    print('\n')
-    print('I found ',noPrecise,' WDS entries without precise (arcsec) coordinates.\n')
-        
+    print(' I found ',noPrecise,' WDS entries without precise (arcsec) coordinates.\n')        
 
     """ FIND J2000.0 COORDINATE OF SECONDARY  """
     # WDS contains RA and DEC of primary and relative offset to companions
@@ -221,8 +230,7 @@ def gaiaTable():
     wdstab['RAsecdeg'] = seccoord.ra.deg
     wdstab['DECsecdeg'] = seccoord.dec.deg
 
-    print('\n')
-    print('J2000.0 Coordinates (RA/DEC) of secondaries found via offsets from primaries.\n')
+    print(' J2000.0 Coordinates (RA/DEC) of secondaries found via offsets from primaries.\n')
     #cpuTimeVec_end = time.process_time()
     #endTimeVec = time.time()
     #elapVecTime = endTimeVec - startTimeVec
@@ -338,27 +346,21 @@ def gaiaTable():
         wdstab[a_col].unit = the_unit
         #print(wdstab[a_col].unit)
 
-
-    print('\n')
-    print('Proper motions applied to 2016.0 for querying against Gaia DR3.')
+    print(' Proper motions applied to 2016.0 for querying against Gaia DR3.\n')
+    print(' Writing the output files!\n')
 
     # Save this for the END. The DM identifications are not available 
     # for all entries and are not a helpful alias.  
     wdstab.remove_columns(['DM', 'Desig'])
 
-    # Avoid astropy generating a warning on a column with the name '#'
-    # and use a more explicit name of 'Num_Meas'
-    wdstab.rename_column('#','Num_meas')
-
     # SAVE TABLE AS ECSV and CSV and as a VOTable
     # Two different ways of coding the ascii-write are 
-    # shown as an example for how to write these and one is a 
-    # little more concise.
+    # shown as an example for how to write these and the last 
+    # two are more concise.
     ascii.write(wdstab, this_path+'/wdstab_new.ecsv', format='ecsv', overwrite=True)
     wdstab.write(this_path+'/wdstab_new.csv', overwrite=True)
     wdstab.write(this_path+'/wdstab_new.vot', format = 'votable', overwrite=True)
 
-    print('\n')
     print('Tables built and written as CSV, ECSV and VOTables.')
 
     endTime    = time.time()
